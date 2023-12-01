@@ -1,21 +1,20 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿var input = File.ReadAllLines("InputPart01.txt");
 
-var input = File.ReadAllLines("InputPart01.txt");
-
-double outputValue = 0;
+var outputValue = 0;
 foreach (var line in input)
 {
     Console.WriteLine(line);
     var startValue = GetCharacter(line);
-
-    var endValue = GetCharacter(ReverseString(line));
-
+    Console.WriteLine($"Start:{startValue}");
+    var endValue = GetCharacterFromEnd(line);
+    Console.WriteLine($"End:{endValue}");
+    
     var finalValue = startValue + endValue;
+    Console.WriteLine($"Final:{finalValue}");
+    var finalValueAsInt = int.Parse(finalValue);
+    outputValue += finalValueAsInt;
 
-    var thing = int.Parse(finalValue);
-    outputValue += thing;
-    Console.WriteLine(thing);
+    Console.WriteLine("+++++");
 }
 
 Console.WriteLine(outputValue);
@@ -23,27 +22,56 @@ Console.WriteLine(outputValue);
 string GetCharacter(string line)
 {
     var output = string.Empty;
-
-    var answerArray = new Dictionary<int, string> { };
+    var index = line.Length;
 
     foreach (var item in GetNumberNames())
     {
-        // Find the index of the word in line
-        answerArray.Add(line.IndexOf(item.Key), item.Value);
+        var foundIndex = line.IndexOf(item.Key, StringComparison.Ordinal);
+        if (foundIndex >= 0 && foundIndex < index)
+        {
+            index=foundIndex;
+            output = item.Value;
+        }
     }
 
-    foreach (var character in line.Where(char.IsDigit))
+    for (var i = 0; i < line.Length; i++)
     {
-        output = character.ToString();
-        answerArray.Add(line.IndexOf(output), output);
-        break;
+        if (char.IsDigit(line[i]) && i >= 0 && i < index)
+        {
+            index = i;
+            output = line[i].ToString();
+        }
+        
     }
-
-    // Find the lowest index that is greater or equal to 0
-    var lowestIndex = answerArray.Where(x => x.Key >= 0).Min(x => x.Key);
-
     return output;
 }
+
+string GetCharacterFromEnd(string line) 
+{
+    for (var i = line.Length; i >= 0; i--)
+    {
+        var digitToCheck = line[i - 1];
+        if (char.IsDigit(digitToCheck))
+        {
+            return line[i-1].ToString();
+        }
+        // Check if you can find a number
+        foreach (var (numberKey, numberValue) in GetNumberNames())
+        {
+            if (i <= numberKey.Length) continue;
+            var substringOfLine = line.Substring(i - numberKey.Length, numberKey.Length);
+            
+            if (numberKey.Equals(substringOfLine))
+            {
+                return numberValue;
+            }
+            
+        }
+    }
+
+    return string.Empty;
+}
+
 
 Dictionary<string, string> GetNumberNames() => new()
 {
@@ -57,11 +85,3 @@ Dictionary<string, string> GetNumberNames() => new()
     { "eight", "8" },
     { "nine", "9" }
 };
-
-// https://stackoverflow.com/questions/228038/best-way-to-reverse-a-string
-string ReverseString(string line)
-{
-    var arrayChar = line.ToCharArray();
-    Array.Reverse(arrayChar);
-    return new string(arrayChar);
-}
