@@ -2,21 +2,20 @@
 Console.WriteLine("Hello, World!");
 
 var input = File.ReadAllLines("InputMain.txt");
-var DictOfCubes = new Dictionary<string, int>
-{
-    { "red", 12 },
-    { "green", 13 },
-    { "blue", 14 }
-};
-var listOfIds = new List<string>();
-var listOfAllIds = new List<string>();
+var output = 0;
 
 foreach (var line in input)
 {
+    var DictOfCubesPerGame = new Dictionary<string, int>
+    {
+        { "red", 0 },
+        { "green", 0 },
+        { "blue", 0 },
+    };
+
+
     var gameSplit = line.Split(":");
     var gameDetails = gameSplit[0];
-    var gameNumber = gameDetails.Split(" ")[1].Trim();
-    listOfAllIds.Add(gameNumber);
     Console.WriteLine(gameDetails);
     var listOfSets = gameSplit[1].Split(";");
     foreach (var set in listOfSets)
@@ -28,40 +27,38 @@ foreach (var line in input)
             var cTrim = c.Trim();
             var colour = cTrim.Split(" ")[1];
             var amount = int.Parse(cTrim.Split(" ")[0]);
-            // Console.WriteLine($"Colour:{colour}");
-            // Console.WriteLine($"Amount:{amount}");
-            if (DictOfCubes.ContainsKey(colour) && DictOfCubes[colour] >= amount)
+
+            if (amount > DictOfCubesPerGame[colour])
             {
-                // Console.WriteLine("Good!");
+                DictOfCubesPerGame[colour] = amount;
+            }
+
+        }
+    }
+    Console.WriteLine(line);
+
+    var lineOutput = 0;
+
+
+
+    foreach (var i in DictOfCubesPerGame)
+    {
+        if (i.Value > 0)
+        {
+            if (lineOutput == 0)
+            {
+                lineOutput = i.Value;
             }
             else
             {
-                Console.WriteLine($"Impossible game: {gameDetails}");
-                if (!listOfIds.Contains(gameNumber))
-                {
-                    listOfIds.Add(gameNumber);
-                }
+                lineOutput *= i.Value;
             }
         }
-        Console.WriteLine(set);
+        Console.WriteLine($"{i.Key}: {i.Value}");
     }
+    Console.WriteLine(lineOutput);
+    Console.WriteLine("++");
+    output += lineOutput;
 }
 
-var allOutputs = 0;
-
-foreach (var id in listOfAllIds)
-{
-    allOutputs += int.Parse(id);
-}
-Console.WriteLine($"All Outputs:{allOutputs}");
-var output = 0;
-
-foreach (var id in listOfIds)
-{
-    Console.WriteLine(id);
-    output += int.Parse(id);
-}
-
-Console.WriteLine($"Negative Outputs:{output}");
-Console.WriteLine(allOutputs-output);
-
+Console.WriteLine(output);
