@@ -1,65 +1,92 @@
-﻿using System.Runtime.CompilerServices;
-
-var input = File.ReadAllLines("InputFull.txt").ToList();
-
-var readIntoMemory = "";
+﻿var input = File.ReadAllLines("InputSample.txt").ToList();
 
 var listOfPartNumbers = new List<PartNumberContainer>();
 
-var listOfAllCharactersUsed = new List<char>();
+var listOfGearCoordinates = new List<Coordinates>();
 
-// i = y axis
+// i = y axis - ROW
     for (var i = 0; i < input.Count; i++)
 {
     var line = input[i];
     var partNumber = string.Empty;
+    var listOfCoordinates = new List<Coordinates>();
     var adjacentSymbol = false;
 
-    // j = x axis
+    // j = x axis - COL
     for (var j = 0; j < line.Length; j++)
     {
         var character = line[j];
         if (char.IsDigit(character))
         {
             partNumber += character;
+            listOfCoordinates.Add(new Coordinates(row: i, col: j));
             // Check adjacent
-            Console.WriteLine($"-CHECK-:x:{j}|y:{i}");
+            // Console.WriteLine($"-CHECK-:x:{j}|y:{i}");
             if (adjacentSymbol == false)
             {
                 adjacentSymbol = CheckAdjacent(input, j, i);
             }
-            Console.WriteLine($"RESULT:{adjacentSymbol}");
-            Console.WriteLine(" ");
+            /*Console.WriteLine($"RESULT:{adjacentSymbol}");
+            Console.WriteLine(" ");*/
         }
         else
         {
             if (partNumber != string.Empty)
             {
-                listOfPartNumbers.Add(new PartNumberContainer(int.Parse(partNumber), adjacentSymbol));
+                listOfPartNumbers.Add(new PartNumberContainer(int.Parse(partNumber), adjacentSymbol, listOfCoordinates));
                 partNumber = string.Empty;
                 adjacentSymbol = false;
+                listOfCoordinates = new List<Coordinates>();
             }
         }
     }
 
     if (partNumber != string.Empty)
     {
-        listOfPartNumbers.Add(new PartNumberContainer(int.Parse(partNumber), adjacentSymbol));
+        listOfPartNumbers.Add(new PartNumberContainer(int.Parse(partNumber), adjacentSymbol, listOfCoordinates));
     }
 }
 
+// Calculate output
 var output = 0;
-foreach (var thing in listOfPartNumbers)
+
+foreach (var gearCoordinate in listOfGearCoordinates)
 {
-    Console.WriteLine(thing.PartNumber);
-    Console.WriteLine(thing.IsPartNumber);
-    Console.Write(" ++");
-    if (thing.IsPartNumber)
+    var listOfAdjacentPartNumberContainers = new List<PartNumberContainer>();
+
+    foreach (var partNumberContainer in listOfPartNumbers)
     {
-        output += thing.PartNumber;
+        if (!partNumberContainer.IsPartNumber) { continue; }
+        foreach (var coordinate in partNumberContainer.ListOfCoordinates)
+        {
+            // check proximity:
+            if (IsAdjacent(gearCoordinate, coordinate))
+            {
+                if (!listOfAdjacentPartNumberContainers.Contains(partNumberContainer))
+                {
+                    listOfAdjacentPartNumberContainers.Add(partNumberContainer);
+                }
+            }
+        }
+    }
+    // Calculate answer
+    if (listOfAdjacentPartNumberContainers.Any())
+    {
+        int product = 1;
+        foreach (var item in listOfAdjacentPartNumberContainers)
+        {
+            product *= item.PartNumber;
+        }
+
+        output += product;
     }
 }
+
 Console.WriteLine(output);
+
+bool IsAdjacent(Coordinates coord1, Coordinates coord2) =>
+    Math.Abs(coord1.Row - coord2.Row) <= 1 &&
+    Math.Abs(coord1.Col - coord2.Col) <= 1;
 
 bool CheckAdjacent(List<string> listOfThings, int y, int x)
 {
@@ -80,45 +107,30 @@ bool CheckAdjacent(List<string> listOfThings, int y, int x)
             if(rowIndex.Equals(x) && colIndex.Equals(y)) {continue;}
 
             var charToCheck = lineToCheck[colIndex];
-            Console.WriteLine($"charToCheck:{charToCheck}|row:{rowIndex}|col:{colIndex}");
+            // Console.WriteLine($"charToCheck:{charToCheck}|row:{rowIndex}|col:{colIndex}");
             
-            if(!char.IsDigit(charToCheck) && !charToCheck.Equals('.'))
+            if(charToCheck.Equals('*'))
             {
-                Console.WriteLine("Huzzah!");
+                var newGear = new Coordinates(row: rowIndex, col: colIndex);
+
+                var canAdd = true;
+                foreach (var gearCoord in listOfGearCoordinates)
+                {
+                    if (gearCoord.GetId().Equals(newGear.GetId()))
+                    {
+                        canAdd = false;
+                    }
+                }
+
+                if (canAdd)
+                {
+                    listOfGearCoordinates.Add(newGear);
+
+                }
+
                 return true;
             }
-            else
-            {
-                Console.WriteLine("Nope");
-            }
-            
-
         }
     }
     return false;
-}
-
-
-/*public class Coordinates
-{
-    public int Row {get; set; }
-    public int Col { get; set; }
-    public Coordinates(int row, int col)
-    {
-        Row = row;
-        Col = col;
-    }
-}*/
-
-
-public class PartNumberContainer
-{
-    public int PartNumber { get; set; }
-    public bool IsPartNumber { get; set; }
-
-    public PartNumberContainer(int partNumber, bool isPartNumber)
-    {
-        this.PartNumber = partNumber;
-        this.IsPartNumber = isPartNumber;
-    }
 }
